@@ -6,29 +6,41 @@ import io
 from comparison.compare import compare_pil_images
 
 # Função para buscar documentos
-def search_documents(max_results=10, start=0, collection=None, max_pages=None):
+# Função para buscar documentos
+def search_documents(max_results=10, start=0, collection=None, doc_type=None, max_pages=None):
+    """
+    Busca documentos na API com base nos filtros.
+    """
     base_url = "https://metadata.idl.ucsf.edu/solr/ltdl3/query"
-    
-    # Configurar query para a coleção selecionada
-    query = f"collection:{collection}" if collection else "*:*"
+    query_parts = []
+
+    # Filtros
+    if collection:
+        query_parts.append(f"collection:\"{collection}\"")
+    if doc_type:
+        query_parts.append(f"type:\"{doc_type}\"")
     if max_pages:
-        query += f" AND pages:[* TO {max_pages}]"
-    
-    # Log do query no console para depuração
-    st.write(f"Query enviado: {query}")
+        query_parts.append(f"pages:[* TO {max_pages}]")
+
+    # Construção da query final
+    query = " AND ".join(query_parts) if query_parts else "*:*"
+    st.write(f"Query enviado: {query}")  # Log da query para depuração
 
     params = {
-        "q": query,  # Palavra-chave
-        "wt": "json",  # Formato JSON
+        "q": query,
+        "wt": "json",
         "rows": max_results,
         "start": start
     }
+
     response = requests.get(base_url, params=params)
     if response.status_code == 200:
-        return response.json()
+        return response.json().get("response", {}).get("docs", [])
     else:
-        st.error(f"Erro ao buscar dados: {response.status_code}")
-        return None
+        st.error(f"Erro na busca de documentos: {response.status_code}")
+        return []
+
+
     
 # Função para gerar URL do arquivo TIF
 def get_tif_url(doc_id):
