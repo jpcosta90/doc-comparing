@@ -47,5 +47,5 @@ Certifique-se de ter os seguintes itens instalados:
 
 1. Clone o repositório:
    ```bash
-   git clone https://github.com/seu-usuario/seu-repositorio.git
+   git clone https://github.com/jpcosta90/doc-comparing.git
    cd seu-repositorio
