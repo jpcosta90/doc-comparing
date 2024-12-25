@@ -66,6 +66,7 @@ def load_new_comparison():
             st.warning("Nenhuma nova comparação disponível.")
             
 # Escala de comparação de documentos com cálculo e botão salvar/atualizar
+# Escala de comparação de documentos com cálculo e botão salvar/atualizar
 def display_comparison_scale(doc_ids, img1=None, img2=None):
     scale_labels = [
         "Totalmente Diferente",
@@ -125,13 +126,26 @@ def display_comparison_scale(doc_ids, img1=None, img2=None):
             )
             st.success("Comparação salva com sucesso!")
 
-# Função para carregar documentos da tabela Candidatas
+        # Carregar a próxima comparação automaticamente
+        with st.spinner("Carregando próxima comparação..."):
+            load_candidates_comparison()
+
+
+# Função para carregar documentos da tabela Candidatas, ignorando os que já existem em Comparacoes
 def load_candidates_comparison():
-    candidates = fetch_candidates(limit=2)
+    """
+    Carrega documentos da tabela Candidatas que ainda não estão na tabela Comparacoes.
+    """
+    candidates = fetch_candidates(limit=2)  # Buscar apenas 2 novos candidatos
+
     if candidates:
         st.session_state["docs"] = [{"id": candidates[0][1]}, {"id": candidates[0][2]}]
     else:
-        st.warning("Nenhuma comparação candidata disponível.")
+        st.warning("Nenhuma nova comparação disponível na tabela Candidatas.")
+
+
+
+
 
 # Aplicação Streamlit
 st.title("Industry Documents Library - Comparação de Documentos")

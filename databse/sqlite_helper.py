@@ -115,7 +115,8 @@ def fetch_tables() -> List[str]:
 
 def comparison_exists(doc1_id, doc2_id, connection=None):
     """
-    Verifica se a comparação entre dois documentos já existe no banco de dados.
+    Verifica se a comparação entre dois documentos já existe no banco de dados,
+    considerando ambas as ordens de IDs (doc1_id, doc2_id) e (doc2_id, doc1_id).
     """
     close_connection = False
     if connection is None:
@@ -124,8 +125,10 @@ def comparison_exists(doc1_id, doc2_id, connection=None):
 
     cursor = connection.cursor()
     cursor.execute("""
-    SELECT 1 FROM Comparacoes WHERE doc1_id = ? AND doc2_id = ?
-    """, (doc1_id, doc2_id))
+    SELECT 1 FROM Comparacoes
+    WHERE (doc1_id = ? AND doc2_id = ?)
+       OR (doc1_id = ? AND doc2_id = ?)
+    """, (doc1_id, doc2_id, doc2_id, doc1_id))
     exists = cursor.fetchone()
 
     if close_connection:
@@ -221,16 +224,28 @@ def count_candidates():
     conn.close()
     return count
 
-# Busca candidatos na tabela
+# Busca candidatos na tabela que não estão na tabela Comparacoes
 def fetch_candidates(limit=100):
     """
-    Retorna os registros da tabela Candidatas, limitados ao valor especificado.
+    Retorna os registros da tabela Candidatas que não estão na tabela Comparacoes,
+    limitados ao valor especificado.
     """
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM Candidatas LIMIT ?", (limit,))
+    # Consulta para buscar candidatos não existentes na tabela Comparacoes
+    query = """
+    SELECT c.*
+    FROM Candidatas c
+    LEFT JOIN Comparacoes cmp
+    ON (c.doc1_id = cmp.doc1_id AND c.doc2_id = cmp.doc2_id)
+       OR (c.doc1_id = cmp.doc2_id AND c.doc2_id = cmp.doc1_id)
+    WHERE cmp.id IS NULL
+    LIMIT ?
+    """
+    cursor.execute(query, (limit,))
     candidates = cursor.fetchall()
 
     conn.close()
     return candidates
+
